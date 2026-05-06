@@ -3,17 +3,17 @@ package telas;
 import javax.swing.*;
 import java.awt.*;
 import service.LoginService;
-import repository.AlunoRepository; // Importando seu repositório
-import entity.AlunoEntity;  // importando sua entidade
 
-public class LoginView extends JFrame {
+
+public class WebView extends JFrame {
     // Componentes de tela
     private JTextField txtUsuario;
     private JPasswordField txtSenha;
     private JButton btnEntrar;
+    private JButton btnSair;
 
 
-    public LoginView() {
+    public WebView() {
         setTitle("Sistema Academia - Login");
         setSize(350, 200);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -45,7 +45,20 @@ public class LoginView extends JFrame {
     class MenuPrincipalView extends JFrame {
         public MenuPrincipalView() {
             setTitle("Sistema Academia - Menu Principal");
-            setSize(350, 200);
+            setSize(600, 400);
+            setLocationRelativeTo(null);
+            setLayout(new BorderLayout());
+            setLayout(new GridLayout(3, 2, 10, 10));
+            JPanel painelSuperior = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            btnSair= new JButton("Sair");
+            painelSuperior.add(btnSair);
+            add(painelSuperior,BorderLayout.NORTH);
+            
+            btnSair.addActionListener(e -> {
+                new WebView().setVisible(true);
+                this.dispose();
+            });
+
         }
     }
 
@@ -64,9 +77,10 @@ public class LoginView extends JFrame {
             // Aqui você abriria a próxima tela do projeto
             // new MenuPrincipalView().setVisible(true);
 
-            this.dispose(); // Fecha a telea de login
+            // Fecha a telea de login
         } else {
             new MenuPrincipalView().setVisible(true);
+            this.dispose();
             // Tratamento de Erros/Feedback
             /*JOptionPane.showMessageDialog(this, "CPF ou senha inválidos!",
                     "Erro de Auntenticação", JOptionPane.ERROR_MESSAGE);*/
@@ -76,7 +90,7 @@ public class LoginView extends JFrame {
     // Método principal para a tela
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            new LoginView().setVisible(true);
+            new WebView().setVisible(true);
         });
     }
 }
