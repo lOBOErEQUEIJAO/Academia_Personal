@@ -20,8 +20,7 @@ public class AlunoEntity implements Identificavel {
     @Column(name = "cpf", nullable = false, length = 14, unique = true)
     private String cpf;
 
-    @Column(name = "senha", nullable = false)
-    private String senha;
+
 
     @Column(name = "data_nascimento", nullable = false)
     private LocalDate dataNascimento;
@@ -60,7 +59,7 @@ public class AlunoEntity implements Identificavel {
     public String getCpf() { return cpf; }
     public void setCpf(String cpf) { this.cpf = cpf; }
 
-    public String getSenha(){ return senha;}
+
 
     public LocalDate getDataNascimento() { return dataNascimento; }
     public void setDataNascimento(LocalDate dataNascimento) { this.dataNascimento = dataNascimento; }
