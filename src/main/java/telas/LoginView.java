@@ -1,5 +1,6 @@
 package telas;
 
+import service.LoginService;
 import javax.swing.*;
 import java.awt.*;
 
@@ -29,33 +30,22 @@ public class LoginView extends JFrame {
 
         botaoLogin = new JButton("Entrar");
         painel.add(botaoLogin);
-
         add(painel);
-
         botaoLogin.addActionListener(e -> fazerLogin());
-
         setVisible(true);
     }
 
     private void fazerLogin() {
-
         String usuario = campoCpf.getText();
         String senha = new String(campoSenha.getPassword());
+        LoginService loginService = new LoginService();
 
-        String usuarioBanco = "postgres";
-        String senhaBanco = "cataratas";
-
-        if (usuario.equals(usuarioBanco) && senha.equals(senhaBanco)) {
-
-            JOptionPane.showMessageDialog(this, "Login realizado!");
-
+        if (loginService.autenticar(usuario, senha)) {
+            JOptionPane.showMessageDialog(this,"Login realizado!");
             new MenuPrincipalView();
-
             dispose();
-
         } else {
-
-            JOptionPane.showMessageDialog(this, "Usuário ou senha inválidos!");
+            JOptionPane.showMessageDialog(this,"Usuário ou senha inválidos!");
         }
     }
 }
