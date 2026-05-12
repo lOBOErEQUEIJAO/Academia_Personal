@@ -41,10 +41,7 @@ public class BtnAgendar {
                                 + d.getHoraInicio());
             }
 
-            String idTexto = JOptionPane.showInputDialog(tela,
-                            horarios +
-                                    "\nDigite o ID da aula:"
-                    );
+            String idTexto = JOptionPane.showInputDialog(tela,horarios + "Digite o ID da aula:");
 
             Long id = Long.parseLong(idTexto);
 
