@@ -13,7 +13,7 @@ public class LoginView extends JFrame {
     public LoginView() {
 
         setTitle("Login Academia");
-        setSize(400, 250);
+        setSize(850, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 

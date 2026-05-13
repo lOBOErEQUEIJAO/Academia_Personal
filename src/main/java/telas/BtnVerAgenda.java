@@ -27,7 +27,8 @@ public class BtnVerAgenda {
                                 + "\nHorário: "
                                 + d.getHoraInicio()
                                 + " até "
-                                + d.getHoraFim());
+                                + d.getHoraFim()
+                                + "\n");
             }
 
             JTextArea area = new JTextArea(agenda.toString());

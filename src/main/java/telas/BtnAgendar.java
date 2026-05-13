@@ -15,7 +15,6 @@ public class BtnAgendar {
     public void agendar(JFrame tela) {
         try {
             AlunoService alunoService = new AlunoService();
-
             DisponibilidadeService disponibilidadeService = new DisponibilidadeService();
             AgendamentoService agendamentoService = new AgendamentoService();
             String cpf = JOptionPane.showInputDialog(tela,"CPF do aluno:");

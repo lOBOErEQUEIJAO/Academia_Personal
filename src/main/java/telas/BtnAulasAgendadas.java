@@ -2,7 +2,6 @@ package telas;
 
 import entity.AgendamentoEntity;
 import service.AgendamentoService;
-
 import javax.swing.*;
 import java.util.List;
 
@@ -36,7 +35,8 @@ public class BtnAulasAgendadas {
                                 + ag.getDisponibilidade()
                                 .getHoraInicio()
                                 + "\nStatus: "
-                                + ag.getStatus());
+                                + ag.getStatus()
+                                + "\n");
             }
 
             JTextArea area = new JTextArea(texto.toString());
