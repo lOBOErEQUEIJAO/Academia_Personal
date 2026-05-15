@@ -12,6 +12,10 @@ public class UserEntity {
     @Column(name = "id_user")
     private Long id;
 
+    // ADICIONADO: O campo login que estava faltando
+    @Column(name = "login", nullable = false, length = 100, unique = true)
+    private String login;
+
     @Column(name = "senha", nullable = false, length = 255)
     private String senha;
 
@@ -34,7 +38,10 @@ public class UserEntity {
     @JoinColumn(name = "id_personal", unique = true)
     private PersonalEntity personal;
 
-    public UserEntity() {}
+    public UserEntity() {
+        this.criadoEm = LocalDate.now();
+        this.status = StatusUser.ATIVO;
+    }
 
     public UserEntity(String senha, TipoUsuario tipo) {
         this.senha = senha;
@@ -43,7 +50,13 @@ public class UserEntity {
         this.status = StatusUser.ATIVO;
     }
 
+    // --- GETTERS E SETTERS ---
+
     public Long getId() { return id; }
+
+    // Getter e Setter para o Login (O que o Java não estava achando)
+    public String getLogin() { return login; }
+    public void setLogin(String login) { this.login = login; }
 
     public String getSenha() { return senha; }
     public void setSenha(String senha) { this.senha = senha; }

@@ -8,7 +8,7 @@
         <property name="hibernate.connection.username">postgres</property>
         <property name="hibernate.connection.password">cataratas</property>
         <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
-        <property name="hibernate.hbm2ddl.auto">none</property>
+        <property name="hibernate.hbm2ddl.auto">update</property>
         <property name="hibernate.show_sql">false</property>
         <property name="hibernate.format_sql">false</property>
     </session-factory>
