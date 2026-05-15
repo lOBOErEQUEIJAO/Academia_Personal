@@ -22,6 +22,10 @@ public class PersonalEntity implements Identificavel {
     @Column(name = "cref", nullable = false, length = 20, unique = true)
     private String cref;
 
+    // Esta anotação gera a coluna 'senha' no seu banco de dados
+    @Column(name = "senha", nullable = false, length = 255)
+    private String senha;
+
     @Column(name = "especialidade", length = 100)
     private String especialidade;
 
@@ -42,26 +46,22 @@ public class PersonalEntity implements Identificavel {
         this.cref = cref;
     }
 
+    // Getters e Setters
     public Long getId() { return id; }
-
+    public String getSenha() { return senha; }
+    public void setSenha(String senha) { this.senha = senha; }
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
-
     public String getCpf() { return cpf; }
     public void setCpf(String cpf) { this.cpf = cpf; }
-
     public String getCref() { return cref; }
     public void setCref(String cref) { this.cref = cref; }
-
     public String getEspecialidade() { return especialidade; }
     public void setEspecialidade(String especialidade) { this.especialidade = especialidade; }
-
     public String getTelefone() { return telefone; }
     public void setTelefone(String telefone) { this.telefone = telefone; }
-
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-
     public List<DisponibilidadeEntity> getDisponibilidades() { return disponibilidades; }
     public void setDisponibilidades(List<DisponibilidadeEntity> disponibilidades) { this.disponibilidades = disponibilidades; }
 }
