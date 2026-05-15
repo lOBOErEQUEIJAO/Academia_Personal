@@ -2,7 +2,6 @@ package telas;
 
 import entity.PersonalEntity;
 import service.PersonalService;
-
 import javax.swing.*;
 
 public class BtnCadastrarPersonal {
