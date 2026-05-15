@@ -18,6 +18,10 @@ public class UserService {
         return userRepository.buscarPorIdAluno(idAluno);
     }
 
+    public Optional<UserEntity> buscarPorLogin(String login) {
+        return userRepository.buscarPorLogin(login);
+    }
+
     public Optional<UserEntity> buscarPorIdPersonal(Long idPersonal) {
         return userRepository.buscarPorIdPersonal(idPersonal);
     }

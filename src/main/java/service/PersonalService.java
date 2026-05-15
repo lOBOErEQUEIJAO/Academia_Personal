@@ -37,12 +37,23 @@ public class PersonalService {
         if (personalRepository.buscarPorCpf(personal.getCpf()).isPresent()) {
             throw new IllegalArgumentException("CPF " + personal.getCpf() + " ja esta cadastrado.");
         }
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        try (Session session = HibernateUtil
+                .getSessionFactory()
+                .openSession()) {
+
             Transaction tx = session.beginTransaction();
+
             session.save(personal);
-            UserEntity user = new UserEntity(senha, TipoUsuario.PERSONAL);
+
+            UserEntity user =
+                    new UserEntity(senha, TipoUsuario.PERSONAL);
+
+            user.setLogin(personal.getCpf());
+
             user.setPersonal(personal);
+
             session.save(user);
+
             tx.commit();
         }
     }

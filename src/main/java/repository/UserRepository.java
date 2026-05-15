@@ -42,8 +42,23 @@ public class UserRepository implements Repositorio<UserEntity, Long> {
     public Optional<UserEntity> buscarPorIdPersonal(Long idPersonal) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             return session.createQuery(
-                    "FROM UserEntity WHERE personal.id = :idPersonal", UserEntity.class)
+                            "FROM UserEntity WHERE personal.id = :idPersonal",
+                            UserEntity.class)
                     .setParameter("idPersonal", idPersonal)
+                    .uniqueResultOptional();
+        }
+    }
+
+    public Optional<UserEntity> buscarPorLogin(String login) {
+
+        try (Session session =
+                     HibernateUtil.getSessionFactory().openSession()) {
+
+            return session.createQuery(
+                            "FROM UserEntity WHERE login = :login",
+                            UserEntity.class
+                    )
+                    .setParameter("login", login)
                     .uniqueResultOptional();
         }
     }

@@ -47,6 +47,8 @@ public class LoginView extends JFrame {
 
         btnEntrar.addActionListener(e -> executarLogin());
         getRootPane().setDefaultButton(btnEntrar);
+
+        setVisible(true);
     }
 
     private void executarLogin() {
@@ -62,7 +64,7 @@ public class LoginView extends JFrame {
         try {
             // Verifica se o login existe no banco
             if (service.autenticar(cpf, senha)) {
-                new MenuPersonalView().setVisible(true);
+                new MenuPrincipalView().setVisible(true);
                 this.dispose();
             } else {
                 JOptionPane.showMessageDialog(this, "CPF ou Senha incorretos.", "Erro", JOptionPane.ERROR_MESSAGE);
@@ -211,8 +213,5 @@ public class LoginView extends JFrame {
         }
     }
 
-    public static void main(String[] args) {
-        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception e) {}
-        SwingUtilities.invokeLater(() -> new LoginView().setVisible(true));
-    }
+    //
 }
