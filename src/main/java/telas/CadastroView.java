@@ -14,7 +14,7 @@ public class CadastroView extends JFrame {
 
     public CadastroView() {
         setTitle("Sistema Academia - Cadastrar Novo Aluno");
-        setSize(450, 500); // Aumentei um pouco a altura para acomodar o novo botão
+        setSize(450, 500);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -44,11 +44,10 @@ public class CadastroView extends JFrame {
         painelCampos.add(txtSenha);
 
         // --- PAINEL DE BOTÕES (SUL) ---
-        // Usamos GridLayout(2, 1) para um ficar em cima do outro
         JPanel painelBotoes = new JPanel(new GridLayout(2, 1, 5, 5));
         painelBotoes.setBorder(BorderFactory.createEmptyBorder(0, 25, 20, 25));
 
-        // Botão Cancelar (O NOVO)
+        // Botão Cancelar configurado para Voltar
         btnCancelar = new JButton("Cancelar e Voltar");
         btnCancelar.setBackground(new Color(180, 180, 180));
         btnCancelar.setFont(new Font("Arial", Font.PLAIN, 13));
@@ -56,6 +55,7 @@ public class CadastroView extends JFrame {
         // Botão Salvar
         btnSalvar = new JButton("Finalizar Cadastro");
         btnSalvar.setBackground(new Color(34, 139, 34));
+        btnSalvar.setForeground(Color.WHITE); // Texto branco para destacar no verde
         btnSalvar.setFont(new Font("Arial", Font.BOLD, 14));
 
         painelBotoes.add(btnCancelar);
@@ -65,14 +65,12 @@ public class CadastroView extends JFrame {
         add(painelCampos, BorderLayout.CENTER);
         add(painelBotoes, BorderLayout.SOUTH);
 
-        // --- EVENTOS ---
+        // --- EVENTOS DE INTERLIGAÇÃO ---
 
-        // Ação do Botão Cancelar
+        // Ação do Botão Cancelar: Fecha a ficha e volta direto para o Menu Principal
         btnCancelar.addActionListener(e -> {
-            // Apenas fecha esta tela. Como o MenuPersonalView já está aberto por baixo,
-            // ele voltará a ser a tela principal ativa.
             this.dispose();
-            new LoginView.MenuPersonalView().setVisible(true);
+            new MenuPrincipalView().setVisible(true);
         });
 
         // Ação do Botão Salvar
@@ -101,7 +99,10 @@ public class CadastroView extends JFrame {
             service.cadastrar(aluno, senha);
 
             JOptionPane.showMessageDialog(this, "Aluno cadastrado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+
+            // Redireciona de volta para o Menu Principal após salvar com sucesso
             this.dispose();
+            new MenuPrincipalView().setVisible(true);
 
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, "Atenção: " + ex.getMessage(), "Erro de Validação", JOptionPane.WARNING_MESSAGE);

@@ -59,4 +59,7 @@ public class AgendamentoService {
         ag.setStatus(entity.StatusAgendamento.CANCELADO);
         agendamentoRepository.atualizar(ag);
     }
+
+    public void salvar(AgendamentoEntity novoAgendamento) {
+    }
 }

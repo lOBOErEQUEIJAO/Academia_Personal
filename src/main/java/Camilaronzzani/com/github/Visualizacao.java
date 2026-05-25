@@ -278,7 +278,7 @@ public class Visualizacao {
             DisponibilidadeEntity disp = new DisponibilidadeEntity(personal, data, inicio, fim);
             disponibilidadeService.cadastrar(disp);
             System.out.println("Horario salvo!");
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             System.out.println("Erro: " + e.getMessage());
         }
     }

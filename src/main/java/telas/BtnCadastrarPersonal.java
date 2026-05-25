@@ -7,7 +7,6 @@ import javax.swing.*;
 public class BtnCadastrarPersonal {
 
     public void cadastrar(JFrame tela) {
-
         try {
             String nome = JOptionPane.showInputDialog(tela,"Nome:");
 

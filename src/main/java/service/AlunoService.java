@@ -115,4 +115,8 @@ public class AlunoService {
             throw new RuntimeException("Erro ao excluir: " + e.getMessage());
         }
     }
+
+    public void salvar(AlunoEntity aluno) {
+        alunoRepository.atualizar(aluno);
+    }
 }

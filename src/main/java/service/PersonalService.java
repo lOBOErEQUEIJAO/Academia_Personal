@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public class PersonalService {
 
-    PersonalRepository personalRepository = new PersonalRepository();
+    private PersonalRepository personalRepository = new PersonalRepository();
 
     public Optional<PersonalEntity> buscarPorCpf(String cpf) {
         return personalRepository.buscarPorCpf(cpf);
@@ -27,6 +27,14 @@ public class PersonalService {
         return personalRepository.listarTodos();
     }
 
+    // Busca por nome para alimentar a View de Disponibilidade
+    public PersonalEntity buscarPorNome(String nome) {
+        return personalRepository.listarTodos().stream()
+                .filter(p -> p.getNome().equalsIgnoreCase(nome.trim()))
+                .findFirst()
+                .orElse(null);
+    }
+
     public void cadastrar(PersonalEntity personal, String senha) {
         Validador.validarNome(personal.getNome());
         Validador.validarCpf(personal.getCpf());
@@ -34,22 +42,18 @@ public class PersonalService {
         Validador.validarTelefone(personal.getTelefone());
         Validador.validarEmail(personal.getEmail());
         Validador.validarSenha(senha);
+
         if (personalRepository.buscarPorCpf(personal.getCpf()).isPresent()) {
             throw new IllegalArgumentException("CPF " + personal.getCpf() + " ja esta cadastrado.");
         }
-        try (Session session = HibernateUtil
-                .getSessionFactory()
-                .openSession()) {
 
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Transaction tx = session.beginTransaction();
 
             session.save(personal);
 
-            UserEntity user =
-                    new UserEntity(senha, TipoUsuario.PERSONAL);
-
+            UserEntity user = new UserEntity(senha, TipoUsuario.PERSONAL);
             user.setLogin(personal.getCpf());
-
             user.setPersonal(personal);
 
             session.save(user);

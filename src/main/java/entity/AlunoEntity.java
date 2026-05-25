@@ -37,21 +37,26 @@ public class AlunoEntity implements Identificavel {
     @Column(name = "email", length = 100)
     private String email;
 
+    @Column(name = "personal_trainer", length = 100)
+    private String personalTrainer;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = true)
     private StatusAluno status;
 
     // 1. Construtor Vazio (Obrigatório para o Hibernate)
-    public AlunoEntity() {}
+    public AlunoEntity() {
+        this.status = StatusAluno.ATIVO;
+    }
 
-    // 2. Construtor com 4 parâmetros (Resolve o erro: "cannot be applied to given types")
+    // 2. Construtor com 4 parâmetros
     public AlunoEntity(String nome, String cpf, LocalDate dataNascimento, LocalDate dataMatricula) {
         this.nome = nome;
         this.cpf = cpf;
         this.dataNascimento = dataNascimento;
         this.dataMatricula = dataMatricula;
-        this.status = StatusAluno.ATIVO; // Define como ATIVO por padrão
-        this.senha = "123456"; // Senha padrão para evitar erro de not-null no cadastro
+        this.status = StatusAluno.ATIVO;
+        this.senha = "123456";
     }
 
     // Getters e Setters
@@ -72,6 +77,12 @@ public class AlunoEntity implements Identificavel {
     public void setDataMatricula(LocalDate dataMatricula) { this.dataMatricula = dataMatricula; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getPersonalTrainer() { return personalTrainer; }
+
+    @SuppressWarnings("unused")
+    public void setPersonalTrainer(String personalTrainer) { this.personalTrainer = personalTrainer; }
+
     public StatusAluno getStatus() { return status; }
     public void setStatus(StatusAluno status) { this.status = status; }
 }
