@@ -60,6 +60,20 @@ public class AgendamentoService {
         agendamentoRepository.atualizar(ag);
     }
 
-    public void salvar(AgendamentoEntity novoAgendamento) {
+    // ==========================================
+    // MÉTODO CORRIGIDO (MÉTODO SALVAR/ATUALIZAR)
+    // ==========================================
+    public void salvar(AgendamentoEntity agendamento) {
+        if (agendamento == null) {
+            throw new IllegalArgumentException("O agendamento não pode ser nulo.");
+        }
+
+        // Se o agendamento já tiver um ID, significa que ele existe e estamos atualizando ele
+        if (agendamento.getId() != null) {
+            agendamentoRepository.atualizar(agendamento);
+        } else {
+            // Se não tiver ID, significa que é um novo agendamento sendo criado do zero
+            agendamentoRepository.salvar(agendamento);
+        }
     }
 }

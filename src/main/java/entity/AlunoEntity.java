@@ -2,6 +2,7 @@ package entity;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.util.List; // IMPORTADO PARA A LISTA DE CASCATA
 import Camilaronzzani.com.github.Identificavel;
 
 @Entity
@@ -44,6 +45,12 @@ public class AlunoEntity implements Identificavel {
     @Column(name = "status", nullable = true)
     private StatusAluno status;
 
+    // =========================================================================
+    // MAPEAMENTO DA CASCATA: APAGA OS AGENDAMENTOS SE O ALUNO FOR EXCLUÍDO
+    // =========================================================================
+    @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AgendamentoEntity> agendamentos;
+
     // 1. Construtor Vazio (Obrigatório para o Hibernate)
     public AlunoEntity() {
         this.status = StatusAluno.ATIVO;
@@ -85,4 +92,8 @@ public class AlunoEntity implements Identificavel {
 
     public StatusAluno getStatus() { return status; }
     public void setStatus(StatusAluno status) { this.status = status; }
+
+    // Getter e Setter da lista de agendamentos mapeada
+    public List<AgendamentoEntity> getAgendamentos() { return agendamentos; }
+    public void setAgendamentos(List<AgendamentoEntity> agendamentos) { this.agendamentos = agendamentos; }
 }

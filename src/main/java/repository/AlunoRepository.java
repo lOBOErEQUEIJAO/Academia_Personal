@@ -2,6 +2,7 @@ package repository;
 
 import config.HibernateUtil;
 import entity.AlunoEntity;
+import entity.StatusAluno;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
@@ -32,28 +33,56 @@ public class AlunoRepository implements Repositorio<AlunoEntity, Long> {
         }
     }
 
+    // ARRUMADO: Agora traz apenas os alunos ATIVOS para a tabela da tela
     public List<AlunoEntity> listarTodos() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.createQuery("FROM AlunoEntity", AlunoEntity.class).list();
+            return session.createQuery("FROM AlunoEntity WHERE status = :status", AlunoEntity.class)
+                    .setParameter("status", StatusAluno.ATIVO)
+                    .list();
         }
     }
 
+    // ARRUMADO: Protegido contra sessões fechadas usando uma transação isolada e limpa
     public void atualizar(AlunoEntity aluno) {
+        Transaction tx = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            Transaction tx = session.beginTransaction();
+            tx = session.beginTransaction();
+
+            // Faz o merge e commita na mesma sessão aberta
             session.merge(aluno);
+
             tx.commit();
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
+            throw new RuntimeException("Erro ao atualizar dados do aluno: " + e.getMessage());
         }
     }
 
+    // ARRUMADO: Em vez de quebrar o banco com os agendamentos, fazemos a exclusão lógica perfeita
     public void deletar(Long id) {
+        Transaction tx = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            Transaction tx = session.beginTransaction();
+            tx = session.beginTransaction();
+
+            // 1. Busca o aluno dentro desta sessão ativa
             AlunoEntity aluno = session.get(AlunoEntity.class, id);
+
             if (aluno != null) {
-                session.delete(aluno);
+                // 2. Altera o status dele para INATIVO
+                aluno.setStatus(StatusAluno.INATIVO);
+
+                // 3. Salva a alteração
+                session.merge(aluno);
+
+                tx.commit();
+                System.out.println("Aluno inativado com sucesso.");
+            } else {
+                System.out.println("Aluno não encontrado para exclusão.");
+                if (tx != null) tx.rollback();
             }
-            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
+            throw new RuntimeException("Erro ao tentar excluir o aluno:\n" + e.getMessage());
         }
     }
 }

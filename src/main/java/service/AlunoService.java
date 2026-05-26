@@ -1,15 +1,16 @@
 package service;
 
-import config.HibernateUtil;
 import entity.*;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import config.HibernateUtil;
 import repository.AlunoRepository;
 import java.util.List;
 import java.util.Optional;
 
 public class AlunoService {
-    private AlunoRepository alunoRepository = new AlunoRepository();
+
+    private final AlunoRepository alunoRepository = new AlunoRepository();
 
     // --- MÉTODOS DE BUSCA ---
 
@@ -38,6 +39,8 @@ public class AlunoService {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Transaction tx = session.beginTransaction();
             try {
+                // Define o status inicial do aluno como ATIVO ao cadastrar
+                aluno.setStatus(StatusAluno.ATIVO);
                 session.save(aluno);
 
                 UserEntity user = new UserEntity();
@@ -60,63 +63,48 @@ public class AlunoService {
         alunoRepository.atualizar(aluno);
     }
 
-    // --- MÉTODOS DE CANCELAMENTO E EXCLUSÃO ---
+    public void salvar(AlunoEntity aluno) {
+        alunoRepository.atualizar(aluno);
+    }
+
+    // --- MÉTODOS DE CANCELAMENTO E EXCLUSÃO (ARRUMADOS) ---
 
     /**
-     * Resolve o erro: cannot find symbol cancelar
-     * Apenas desativa o aluno (muda o status)
+     * Faz a exclusão lógica do aluno e desativa seu usuário de acesso.
      */
-    public void cancelar(Long id) {
+    public void excluir(Long id) {
+        // 1. Desativa o login/usuário do aluno no banco de dados primeiro
+        Transaction tx = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            Transaction tx = session.beginTransaction();
-            AlunoEntity aluno = session.get(AlunoEntity.class, id);
-            if (aluno != null) {
-                aluno.setStatus(StatusAluno.INATIVO); // Certifique-se que StatusAluno.INATIVO existe
-                session.update(aluno);
-                tx.commit();
-            } else {
-                throw new IllegalArgumentException("Aluno não encontrado.");
-            }
+            tx = session.beginTransaction();
+
+            // Localiza o usuário vinculado ao aluno para também inativá-lo
+            session.createQuery("UPDATE UserEntity u SET u.status = :statusInativo WHERE u.aluno.id = :idAluno")
+                    .setParameter("statusInativo", StatusUser.INATIVO) // Ajuste o enum se o seu for diferente de INATIVO
+                    .setParameter("idAluno", id)
+                    .executeUpdate();
+
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
+            System.out.println("Aviso: Não foi possível atualizar o status do usuário vinculado: " + e.getMessage());
         }
+
+        // 2. Encaminha para o repositório fazer a inativação do registro do aluno com segurança
+        alunoRepository.deletar(id);
     }
 
     /**
-     * Resolve o erro: cannot find symbol deletar
-     * Chamado pela Visualizacao para exclusão lógica ou total
+     * Redireciona para a mesma lógica centralizada de exclusão segura.
      */
     public void deletar(Long id) {
-        // Aqui você pode decidir se deleta do banco ou apenas desativa.
-        // Vou chamar o excluir que você já tem para apagar do banco:
         this.excluir(id);
     }
 
     /**
-     * Exclui o aluno e o usuário vinculado do banco de dados.
+     * Redireciona para a mesma lógica centralizada de exclusão segura.
      */
-    public void excluir(Long id) {
-        Transaction tx = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            tx = session.beginTransaction();
-            AlunoEntity aluno = session.get(AlunoEntity.class, id);
-
-            if (aluno != null) {
-                session.createQuery("DELETE FROM UserEntity u WHERE u.aluno = :aluno")
-                        .setParameter("aluno", aluno)
-                        .executeUpdate();
-
-                session.createQuery("DELETE FROM AlunoEntity a WHERE a.id = :id")
-                        .setParameter("id", id)
-                        .executeUpdate();
-
-                tx.commit();
-            }
-        } catch (Exception e) {
-            if (tx != null) tx.rollback();
-            throw new RuntimeException("Erro ao excluir: " + e.getMessage());
-        }
-    }
-
-    public void salvar(AlunoEntity aluno) {
-        alunoRepository.atualizar(aluno);
+    public void cancelar(Long id) {
+        this.excluir(id);
     }
 }

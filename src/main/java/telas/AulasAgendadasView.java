@@ -1,6 +1,7 @@
 package telas;
 
 import entity.AgendamentoEntity;
+import entity.StatusAluno; // IMPORTANTE PARA O FILTRO DO ALUNO INATIVO
 import service.AgendamentoService;
 
 import javax.swing.*;
@@ -17,369 +18,202 @@ import java.util.List;
 public class AulasAgendadasView extends JFrame {
 
     private JTable tabelaAulas;
-
     private DefaultTableModel modeloTabela;
-
     private List<AgendamentoEntity> listaAgendamentos;
-
-    private final AgendamentoService agendamentoService =
-            new AgendamentoService();
+    private final AgendamentoService agendamentoService = new AgendamentoService();
 
     public AulasAgendadasView() {
-
         setTitle("Sistema Academia - Relatório de Aulas");
-
         setSize(700, 450);
-
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
         setLocationRelativeTo(null);
-
         setLayout(new BorderLayout());
 
-        JLabel lblTitulo =
-                new JLabel(
-                        "Cronograma de Aulas Marcadas",
-                        SwingConstants.CENTER
-                );
-
-        lblTitulo.setFont(
-                new Font("Arial", Font.BOLD, 20)
-        );
-
-        lblTitulo.setBorder(
-                BorderFactory.createEmptyBorder(
-                        15,
-                        0,
-                        15,
-                        0
-                )
-        );
-
+        JLabel lblTitulo = new JLabel("Cronograma de Aulas Marcadas", SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
+        lblTitulo.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
         // COLUNAS
+        String[] colunas = {"Aluno", "Data", "Horário", "Personal"};
 
-        String[] colunas = {
-                "Aluno",
-                "Data",
-                "Horário",
-                "Personal"
+        modeloTabela = new DefaultTableModel(colunas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
         };
 
-        modeloTabela =
-                new DefaultTableModel(colunas, 0) {
-
-                    @Override
-                    public boolean isCellEditable(
-                            int row,
-                            int column
-                    ) {
-                        return false;
-                    }
-                };
-
         tabelaAulas = new JTable(modeloTabela);
-
         tabelaAulas.setRowHeight(25);
-
-        tabelaAulas.setFont(
-                new Font("SansSerif", Font.PLAIN, 14)
-        );
+        tabelaAulas.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
         carregarDadosDoBanco();
 
-        // DUPLO CLIQUE
-
-        tabelaAulas.addMouseListener(
-                new MouseAdapter() {
-
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-
-                        if (e.getClickCount() == 2) {
-
-                            int linha =
-                                    tabelaAulas.getSelectedRow();
-
-                            if (linha >= 0) {
-
-                                AgendamentoEntity agendamento =
-                                        listaAgendamentos.get(linha);
-
-                                abrirTelaEdicao(agendamento);
-                            }
-                        }
+        // DUPLO CLIQUE PARA EDITAR
+        tabelaAulas.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int linha = tabelaAulas.getSelectedRow();
+                    if (linha >= 0) {
+                        AgendamentoEntity agendamento = listaAgendamentos.get(linha);
+                        abrirTelaEdicao(agendamento);
                     }
                 }
-        );
+            }
+        });
 
-        JScrollPane scroll =
-                new JScrollPane(tabelaAulas);
-
+        JScrollPane scroll = new JScrollPane(tabelaAulas);
         add(scroll, BorderLayout.CENTER);
 
-        // BOTÃO VOLTAR
+        // ==========================================
+        // PAINEL DE BOTÕES (SUL) - COM O NOVO BOTÃO ATUALIZAR
+        // ==========================================
+        JPanel painelSul = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
 
-        JPanel painelSul = new JPanel();
+        // NOVO BOTÃO: Atualizar Lista
+        JButton btnAtualizar = new JButton("Atualizar Lista");
+        btnAtualizar.setPreferredSize(new Dimension(180, 35));
+        btnAtualizar.setBackground(new Color(60, 179, 113)); // Verde amigável
+        btnAtualizar.setForeground(Color.WHITE);
+        btnAtualizar.setFont(new Font("Arial", Font.BOLD, 13));
+        btnAtualizar.addActionListener(e -> {
+            carregarDadosDoBanco();
+            JOptionPane.showMessageDialog(this, "Lista de cronogramas atualizada!");
+        });
 
-        JButton btnVoltar =
-                new JButton("Voltar");
-
-        btnVoltar.setPreferredSize(
-                new Dimension(200, 35)
-        );
-
+        // BOTÃO: Voltar
+        JButton btnVoltar = new JButton("Voltar");
+        btnVoltar.setPreferredSize(new Dimension(180, 35));
         btnVoltar.addActionListener(e -> {
-
             dispose();
-
             new MenuPrincipalView().setVisible(true);
         });
 
+        painelSul.add(btnAtualizar);
         painelSul.add(btnVoltar);
-
         add(painelSul, BorderLayout.SOUTH);
     }
 
-    // =========================
-    // CARREGA DADOS
-    // =========================
-
+    // ==========================================
+    // CARREGA DADOS FILTRANDO APENAS ALUNOS ATIVOS
+    // ==========================================
     private void carregarDadosDoBanco() {
-
         try {
+            modeloTabela.setRowCount(0); // Limpa as linhas visuais da tabela
 
-            modeloTabela.setRowCount(0);
+            // Busca a lista de agendamentos atualizada do banco
+            listaAgendamentos = agendamentoService.listarTodos();
 
-            listaAgendamentos =
-                    agendamentoService.listarTodos();
+            DateTimeFormatter dataFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            DateTimeFormatter horaFormat = DateTimeFormatter.ofPattern("HH:mm");
 
-            DateTimeFormatter dataFormat =
-                    DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            if (listaAgendamentos != null) {
+                for (AgendamentoEntity agendamento : listaAgendamentos) {
 
-            DateTimeFormatter horaFormat =
-                    DateTimeFormatter.ofPattern("HH:mm");
+                    // MODIFICAÇÃO AQUI: Se o aluno associado estiver INATIVO, pula e não mostra na tabela!
+                    if (agendamento.getAluno() != null && agendamento.getAluno().getStatus() == StatusAluno.INATIVO) {
+                        continue;
+                    }
 
-            for (AgendamentoEntity agendamento :
-                    listaAgendamentos) {
+                    String aluno = "";
+                    if (agendamento.getAluno() != null) {
+                        aluno = agendamento.getAluno().getNome();
+                    }
 
-                String aluno = "";
+                    String data = "";
+                    String hora = "";
+                    if (agendamento.getDataHora() != null) {
+                        data = agendamento.getDataHora().toLocalDate().format(dataFormat);
+                        hora = agendamento.getDataHora().toLocalTime().format(horaFormat);
+                    }
 
-                if (agendamento.getAluno() != null) {
+                    String personal = "";
+                    if (agendamento.getPersonal() != null) {
+                        personal = agendamento.getPersonal();
+                    }
 
-                    aluno =
-                            agendamento.getAluno().getNome();
+                    modeloTabela.addRow(new Object[]{aluno, data, hora, personal});
                 }
-
-                String data = "";
-
-                String hora = "";
-
-                if (agendamento.getDataHora() != null) {
-
-                    data =
-                            agendamento.getDataHora()
-                                    .toLocalDate()
-                                    .format(dataFormat);
-
-                    hora =
-                            agendamento.getDataHora()
-                                    .toLocalTime()
-                                    .format(horaFormat);
-                }
-
-                String personal = "";
-
-                if (agendamento.getPersonal() != null) {
-
-                    personal =
-                            agendamento.getPersonal();
-                }
-
-                modeloTabela.addRow(
-                        new Object[]{
-                                aluno,
-                                data,
-                                hora,
-                                personal
-                        }
-                );
             }
-
         } catch (Exception ex) {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Erro ao carregar:\n"
-                            + ex.getMessage()
-            );
+            JOptionPane.showMessageDialog(this, "Erro ao carregar dados:\n" + ex.getMessage());
         }
     }
 
-    // =========================
-    // EDITAR AGENDAMENTO
-    // =========================
-
-    private void abrirTelaEdicao(
-            AgendamentoEntity agendamento
-    ) {
-
-        JDialog dialog =
-                new JDialog(
-                        this,
-                        "Editar Horário",
-                        true
-                );
-
+    // ==========================================
+    // TELA AUXILIAR PARA ATUALIZAR AGENDAMENTO
+    // ==========================================
+    private void abrirTelaEdicao(AgendamentoEntity agendamento) {
+        JDialog dialog = new JDialog(this, "Editar Horário", true);
         dialog.setSize(400, 300);
-
         dialog.setLocationRelativeTo(this);
-
         dialog.setLayout(new GridBagLayout());
 
-        GridBagConstraints c =
-                new GridBagConstraints();
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(10, 10, 10, 10);
+        c.fill = GridBagConstraints.HORIZONTAL;
 
-        c.insets =
-                new Insets(10, 10, 10, 10);
+        DateTimeFormatter dataFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter horaFormat = DateTimeFormatter.ofPattern("HH:mm");
 
-        c.fill =
-                GridBagConstraints.HORIZONTAL;
-
-        DateTimeFormatter dataFormat =
-                DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-        DateTimeFormatter horaFormat =
-                DateTimeFormatter.ofPattern("HH:mm");
-
-        JTextField txtData =
-                new JTextField();
-
-        JTextField txtHora =
-                new JTextField();
-
-        JTextField txtPersonal =
-                new JTextField();
+        JTextField txtData = new JTextField();
+        JTextField txtHora = new JTextField();
+        JTextField txtPersonal = new JTextField();
 
         if (agendamento.getDataHora() != null) {
-
-            txtData.setText(
-                    agendamento.getDataHora()
-                            .toLocalDate()
-                            .format(dataFormat)
-            );
-
-            txtHora.setText(
-                    agendamento.getDataHora()
-                            .toLocalTime()
-                            .format(horaFormat)
-            );
+            txtData.setText(agendamento.getDataHora().toLocalDate().format(dataFormat));
+            txtHora.setText(agendamento.getDataHora().toLocalTime().format(horaFormat));
         }
 
         if (agendamento.getPersonal() != null) {
-
-            txtPersonal.setText(
-                    agendamento.getPersonal()
-            );
+            txtPersonal.setText(agendamento.getPersonal());
         }
 
-        // DATA
-
-        c.gridx = 0;
-        c.gridy = 0;
-
+        c.gridx = 0; c.gridy = 0;
         dialog.add(new JLabel("Data:"), c);
-
         c.gridx = 1;
-
         dialog.add(txtData, c);
 
-        // HORA
-
-        c.gridx = 0;
-        c.gridy = 1;
-
+        c.gridx = 0; c.gridy = 1;
         dialog.add(new JLabel("Horário:"), c);
-
         c.gridx = 1;
-
         dialog.add(txtHora, c);
 
-        // PERSONAL
-
-        c.gridx = 0;
-        c.gridy = 2;
-
+        c.gridx = 0; c.gridy = 2;
         dialog.add(new JLabel("Personal:"), c);
-
         c.gridx = 1;
-
         dialog.add(txtPersonal, c);
 
-        // BOTÃO SALVAR
-
-        JButton btnSalvar =
-                new JButton("Salvar");
-
-        btnSalvar.setBackground(
-                new Color(30, 144, 255)
-        );
-
+        JButton btnSalvar = new JButton("Salvar");
+        btnSalvar.setBackground(new Color(30, 144, 255));
         btnSalvar.setForeground(Color.WHITE);
 
         btnSalvar.addActionListener(e -> {
-
             try {
-
-                LocalDate data =
-                        LocalDate.parse(
-                                txtData.getText(),
-                                dataFormat
-                        );
-
-                LocalTime hora =
-                        LocalTime.parse(
-                                txtHora.getText(),
-                                horaFormat
-                        );
-
-                LocalDateTime dataHora =
-                        LocalDateTime.of(data, hora);
+                LocalDate data = LocalDate.parse(txtData.getText().trim(), dataFormat);
+                LocalTime hora = LocalTime.parse(txtHora.getText().trim(), horaFormat);
+                LocalDateTime dataHora = LocalDateTime.of(data, hora);
 
                 agendamento.setDataHora(dataHora);
+                agendamento.setPersonal(txtPersonal.getText().trim());
 
-                agendamento.setPersonal(
-                        txtPersonal.getText()
-                );
+                agendamentoService.salvar(agendamento);
 
-                agendamentoService.salvar(
-                        agendamento
-                );
-
-                JOptionPane.showMessageDialog(
-                        dialog,
-                        "Horário atualizado!"
-                );
-
-                carregarDadosDoBanco();
-
+                JOptionPane.showMessageDialog(dialog, "Horário updated com sucesso!");
                 dialog.dispose();
 
-            } catch (Exception ex) {
+                // Recarrega a tabela automaticamente após salvar
+                carregarDadosDoBanco();
 
-                JOptionPane.showMessageDialog(
-                        dialog,
-                        "Erro:\n"
-                                + ex.getMessage()
-                );
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog, "Erro ao salvar alterações:\n" + ex.getMessage());
             }
         });
 
-        c.gridx = 0;
-        c.gridy = 3;
+        c.gridx = 0; c.gridy = 3;
         c.gridwidth = 2;
-
         dialog.add(btnSalvar, c);
 
         dialog.setVisible(true);

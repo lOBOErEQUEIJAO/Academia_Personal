@@ -243,7 +243,7 @@ public class GestaoAlunosView extends JFrame {
         gbc.insets =
                 new Insets(5, 5, 5, 5);
 
-       // pnlCentral.add(btnRemover, gbc);
+        pnlCentral.add(btnRemover, gbc);
 
         add(pnlCentral, BorderLayout.CENTER);
 
