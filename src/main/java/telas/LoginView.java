@@ -3,6 +3,10 @@ package telas;
 import service.LoginService;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import javax.imageio.ImageIO;
 
 public class LoginView extends JFrame {
     private JTextField txtUsuario;
@@ -11,52 +15,114 @@ public class LoginView extends JFrame {
 
     public LoginView() {
         setTitle("Sistema Academia - Acesso Personal");
-        setSize(580, 240);
+        setSize(750, 530); // Ajustado para dar o espaçamento confortável do protótipo
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        JPanel painelPrincipal = new JPanel(new BorderLayout(20, 0));
-        painelPrincipal.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
+        // Painel Principal com fundo cinza bem claro (estilo Figma)
+        JPanel painelPrincipal = new JPanel();
+        painelPrincipal.setBackground(new Color(240, 240, 240));
+        painelPrincipal.setLayout(null); // Permite posicionar os componentes nos pixels exatos
 
-        JPanel painelFormulario = new JPanel(new GridLayout(3, 2, 10, 10));
+        // 1. TÍTULO PRINCIPAL (LOGIN PERSONAL)
+        JLabel lblTitulo = new JLabel("LOGIN PERSONAL");
+        lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 36));
+        lblTitulo.setForeground(Color.BLACK);
+        lblTitulo.setBounds(80, 150, 350, 50);
+        painelPrincipal.add(lblTitulo);
 
-        painelFormulario.add(new JLabel("CPF do Personal:", SwingConstants.RIGHT));
+        // 2. RÓTULO CPF
+        JLabel lblCpf = new JLabel("CPF:");
+        lblCpf.setFont(new Font("SansSerif", Font.BOLD, 12));
+        lblCpf.setBounds(80, 230, 100, 20);
+        painelPrincipal.add(lblCpf);
+
+        // 3. CAMPO DE TEXTO CPF (Alinhado à esquerda com borda fina)
         txtUsuario = new JTextField();
-        txtUsuario.setHorizontalAlignment(JTextField.CENTER);
-        painelFormulario.add(txtUsuario);
+        txtUsuario.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        txtUsuario.setHorizontalAlignment(JTextField.LEFT);
+        txtUsuario.setBounds(80, 255, 300, 35);
+        txtUsuario.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+        painelPrincipal.add(txtUsuario);
 
-        painelFormulario.add(new JLabel("Senha:", SwingConstants.RIGHT));
+        // 4. RÓTULO SENHA
+        JLabel lblSenha = new JLabel("SENHA:");
+        lblSenha.setFont(new Font("SansSerif", Font.BOLD, 12));
+        lblSenha.setBounds(80, 310, 100, 20);
+        painelPrincipal.add(lblSenha);
+
+        // 5. CAMPO DE TEXTO SENHA (Alinhado à esquerda com borda fina)
         txtSenha = new JPasswordField();
-        txtSenha.setHorizontalAlignment(JPasswordField.CENTER);
-        painelFormulario.add(txtSenha);
+        txtSenha.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        txtSenha.setHorizontalAlignment(JPasswordField.LEFT);
+        txtSenha.setBounds(80, 335, 300, 35);
+        txtSenha.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+        painelPrincipal.add(txtSenha);
 
-        painelFormulario.add(new JLabel(""));
+        // 6. BOTÃO ENTRAR (Abaixo dos campos de texto, estilizado em azul)
         btnEntrar = new JButton("Entrar");
+        btnEntrar.setFont(new Font("SansSerif", Font.BOLD, 14));
         btnEntrar.setBackground(new Color(45, 120, 230));
-        painelFormulario.add(btnEntrar);
+        btnEntrar.setForeground(Color.WHITE);
+        btnEntrar.setFocusPainted(false);
+        btnEntrar.setBounds(80, 390, 300, 45); // Centralizado logo abaixo das caixas
+        painelPrincipal.add(btnEntrar);
 
+        // 7. LINK DE CADASTRO (Parte inferior centralizada)
+        JLabel lblCadastro = new JLabel("Não tem login? Cadastre-se", SwingConstants.CENTER);
+        lblCadastro.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        lblCadastro.setForeground(new Color(30, 144, 255)); // Azul de link
+        lblCadastro.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        lblCadastro.setBounds(80, 455, 300, 20);
+        painelPrincipal.add(lblCadastro);
+
+        // 8. LOGO REDONDA (Posicionada à direita do formulário)
         JLabel lblLogo = new JLabel();
+        lblLogo.setBounds(440, 140, 200, 200); // Espaço reservado para a logo à direita
+
         try {
-            ImageIcon iconeOriginal = new ImageIcon("/home/alessandra/Imagens/Imagem musculação.jpg");
-            Image imgRedimensionada = iconeOriginal.getImage().getScaledInstance(160, 160, Image.SCALE_SMOOTH);
-            lblLogo.setIcon(new ImageIcon(imgRedimensionada));
+            File arquivoImg = new File("/home/alessandra/Imagens/Imagem musculação.jpg");
+            BufferedImage imgOriginal = ImageIO.read(arquivoImg);
+
+            if (imgOriginal != null) {
+                // Cria a imagem perfeitamente circular de 180x180 pixels com borda
+                ImageIcon iconeRedondo = criarImagemRedondaComBorda(imgOriginal, 180);
+                lblLogo.setIcon(iconeRedondo);
+            }
         } catch (Exception e) {
             System.out.println("Erro ao carregar imagem: " + e.getMessage());
         }
+        painelPrincipal.add(lblLogo);
 
-        JPanel painelDireitoDaTela = new JPanel(new BorderLayout());
-        painelDireitoDaTela.add(lblLogo, BorderLayout.NORTH);
-
-        painelPrincipal.add(painelFormulario, BorderLayout.CENTER);
-        painelPrincipal.add(painelDireitoDaTela, BorderLayout.EAST);
-
+        // Inicialização da Janela
         add(painelPrincipal);
-
         btnEntrar.addActionListener(e -> executarLogin());
         getRootPane().setDefaultButton(btnEntrar);
 
         setVisible(true);
+    }
+
+    // Método que gera o recorte redondo adicionando a linha preta fina de contorno do desenho
+    private static ImageIcon criarImagemRedondaComBorda(BufferedImage imagemOriginal, int tamanho) {
+        BufferedImage imagemRedonda = new BufferedImage(tamanho, tamanho, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = imagemRedonda.createGraphics();
+
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
+        // Recorta a imagem em círculo
+        g2.setClip(new Ellipse2D.Float(0, 0, tamanho, tamanho));
+        g2.drawImage(imagemOriginal, 0, 0, tamanho, tamanho, null);
+
+        // Remove o clip para desenhar o contorno por cima da borda da imagem
+        g2.setClip(null);
+        g2.setColor(Color.BLACK);
+        g2.setStroke(new BasicStroke(1));
+        g2.draw(new Ellipse2D.Float(0, 0, tamanho - 1, tamanho - 1));
+
+        g2.dispose();
+        return new ImageIcon(imagemRedonda);
     }
 
     private void executarLogin() {

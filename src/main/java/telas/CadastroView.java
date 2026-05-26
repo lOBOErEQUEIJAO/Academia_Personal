@@ -5,6 +5,10 @@ import entity.StatusAluno;
 import service.AlunoService;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import javax.imageio.ImageIO;
 import java.time.LocalDate;
 
 public class CadastroView extends JFrame {
@@ -14,14 +18,34 @@ public class CadastroView extends JFrame {
 
     public CadastroView() {
         setTitle("Sistema Academia - Cadastrar Novo Aluno");
-        setSize(450, 500);
+        setSize(450, 600); // Aumentado um pouco a altura para acomodar a imagem no topo
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
+        // --- PAINEL DO TOPO (Para a Imagem) ---
+        JPanel painelTopo = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 10));
+        JLabel lblFotoPerfil = new JLabel();
+
+        try {
+            // EXEMPLO: Mude esse caminho para o arquivo correto do seu computador depois!
+            File arquivoImg = new File("/home/alessandra/Imagens/icone.png");
+
+            if (arquivoImg.exists()) {
+                BufferedImage imgOriginal = ImageIO.read(arquivoImg);
+                ImageIcon iconeRedondo = criarImagemRedonda(imgOriginal, 100); // Tamanho ajustado para o topo
+                lblFotoPerfil.setIcon(iconeRedondo);
+            } else {
+                lblFotoPerfil.setIcon(criarCirculoPadrao(100));
+            }
+        } catch (Exception e) {
+            lblFotoPerfil.setIcon(criarCirculoPadrao(100));
+        }
+        painelTopo.add(lblFotoPerfil);
+
         // --- PAINEL DE CAMPOS (CENTRO) ---
         JPanel painelCampos = new JPanel(new GridLayout(6, 2, 10, 15));
-        painelCampos.setBorder(BorderFactory.createEmptyBorder(25, 25, 10, 25));
+        painelCampos.setBorder(BorderFactory.createEmptyBorder(15, 25, 10, 25));
 
         painelCampos.add(new JLabel("Nome do Aluno:"));
         txtNome = new JTextField();
@@ -61,7 +85,8 @@ public class CadastroView extends JFrame {
         painelBotoes.add(btnCancelar);
         painelBotoes.add(btnSalvar);
 
-        // Adicionando os painéis na janela
+        // Adicionando os painéis na janela seguindo a estrutura original
+        add(painelTopo, BorderLayout.NORTH); // Imagem adicionada na parte de cima (Norte)
         add(painelCampos, BorderLayout.CENTER);
         add(painelBotoes, BorderLayout.SOUTH);
 
@@ -78,6 +103,41 @@ public class CadastroView extends JFrame {
 
         // Tecla ENTER aciona o botão de salvar automaticamente
         getRootPane().setDefaultButton(btnSalvar);
+    }
+
+    // Método auxiliar para recortar a imagem em formato circular
+    private static ImageIcon criarImagemRedonda(BufferedImage imagemOriginal, int tamanho) {
+        BufferedImage imagemRedonda = new BufferedImage(tamanho, tamanho, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = imagemRedonda.createGraphics();
+
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
+        g2.setClip(new Ellipse2D.Float(0, 0, tamanho, tamanho));
+        g2.drawImage(imagemOriginal, 0, 0, tamanho, tamanho, null);
+
+        g2.setClip(null);
+        g2.setColor(Color.BLACK);
+        g2.setStroke(new BasicStroke(1));
+        g2.draw(new Ellipse2D.Float(0, 0, tamanho - 1, tamanho - 1));
+
+        g2.dispose();
+        return new ImageIcon(imagemRedonda);
+    }
+
+    // Gera um círculo cinza caso o arquivo não seja encontrado
+    private static ImageIcon criarCirculoPadrao(int tamanho) {
+        BufferedImage imagemBkp = new BufferedImage(tamanho, tamanho, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = imagemBkp.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        g2.setColor(Color.LIGHT_GRAY);
+        g2.fill(new Ellipse2D.Float(0, 0, tamanho, tamanho));
+        g2.setColor(Color.BLACK);
+        g2.draw(new Ellipse2D.Float(0, 0, tamanho - 1, tamanho - 1));
+
+        g2.dispose();
+        return new ImageIcon(imagemBkp);
     }
 
     private void executarCadastro() {
@@ -100,7 +160,6 @@ public class CadastroView extends JFrame {
 
             JOptionPane.showMessageDialog(this, "Aluno cadastrado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
 
-            // Redireciona de volta para o Menu Principal após salvar com sucesso
             this.dispose();
             new MenuPrincipalView().setVisible(true);
 
@@ -113,11 +172,6 @@ public class CadastroView extends JFrame {
     }
 
     public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         SwingUtilities.invokeLater(() -> new CadastroView().setVisible(true));
     }
 }
