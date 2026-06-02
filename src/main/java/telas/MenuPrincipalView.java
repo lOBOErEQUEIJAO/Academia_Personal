@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import javax.imageio.ImageIO;
 
 public class MenuPrincipalView extends JFrame {
 
@@ -14,24 +16,26 @@ public class MenuPrincipalView extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
-        // Painel de fundo com um leve cinza azulado suave para dar contraste aos botões vibrantes
-        JPanel painelConteudo = new JPanel(new BorderLayout());
-        painelConteudo.setBackground(new Color(235, 238, 243));
+        // --- PAINEL DE FUNDO COM IMAGEM (Substituindo o antigo painelConteudo) ---
+        // Altere o caminho abaixo para a sua imagem no computador!
+        String caminhoDaImagem = "/home/alessandra/Imagens/nuvem.jpg";
+        PainelComFundo painelConteudo = new PainelComFundo(caminhoDaImagem);
+        painelConteudo.setLayout(new BorderLayout());
 
         // --- TOPO: Título Centralizado ---
         JLabel lblTitulo = new JLabel("Painel de Controle Administrativo", SwingConstants.CENTER);
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblTitulo.setForeground(new Color(20, 30, 45)); // Azul escuro profundo
+        lblTitulo.setForeground(new Color(1, 5, 28)); // Azul escuro profundo
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(25, 0, 15, 0));
         painelConteudo.add(lblTitulo, BorderLayout.NORTH);
 
         // --- CENTRO: Painel de Botões em Grade (3 linhas, 2 colunas) ---
         JPanel painelBotoes = new JPanel(new GridLayout(3, 2, 18, 18));
         painelBotoes.setBorder(BorderFactory.createEmptyBorder(10, 40, 10, 40));
-        painelBotoes.setOpaque(false);
+        painelBotoes.setOpaque(false); // Mantém transparente para o fundo aparecer
 
         // Instanciando os botões com o visual Azul Reluzente Customizado
-        JButton btnCadastro = new BotaoNeonReal("Cadastrar Aluno", new Color(0, 55, 145), new Color(0, 115, 230));
+        JButton btnCadastro = new BotaoNeonReal("Cadastrar Aluno", new Color(0, 55, 145, 255), new Color(0, 115, 230));
         JButton btnAgendar = new BotaoNeonReal("Agendar Aula", new Color(0, 55, 145), new Color(0, 115, 230));
         JButton btnDisponibilidade = new BotaoNeonReal("Cadastrar Disponibilidade", new Color(0, 55, 145), new Color(0, 115, 230));
         JButton btnCadastrarPersonal = new BotaoNeonReal("Cadastrar Personal", new Color(0, 55, 145), new Color(0, 115, 230));
@@ -71,6 +75,35 @@ public class MenuPrincipalView extends JFrame {
         add(painelConteudo);
     }
 
+    // --- SUBCLASSE: Painel customizado que renderiza a imagem de fundo ---
+    private static class PainelComFundo extends JPanel {
+        private Image imagemDeFundo;
+
+        public PainelComFundo(String caminhoImagem) {
+            try {
+                File arquivo = new File(caminhoImagem);
+                if (arquivo.exists()) {
+                    this.imagemDeFundo = ImageIO.read(arquivo);
+                }
+            } catch (Exception e) {
+                System.out.println("Não foi possível carregar a imagem de fundo: " + e.getMessage());
+            }
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (imagemDeFundo != null) {
+                // Desenha a imagem esticando-a para preencher todo o tamanho atual do painel
+                g.drawImage(imagemDeFundo, 0, 0, getWidth(), getHeight(), this);
+            } else {
+                // Caso a imagem não seja encontrada, mantém o fundo padrão cinza azulado original
+                g.setColor(new Color(235, 238, 243));
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+        }
+    }
+
     // --- SUBCLASSE: Mecanismo de Renderização de Brilho de Vidro e Luz Ativa (Hover) ---
     private static class BotaoNeonReal extends JButton {
         private final Color corFundo;
@@ -83,24 +116,23 @@ public class MenuPrincipalView extends JFrame {
             this.corBrilho = corBrilho;
 
             setFont(new Font("Segoe UI", Font.BOLD, 14));
-            setForeground(Color.WHITE); // Texto branco para destacar o azul escuro
+            setForeground(Color.WHITE);
             setFocusPainted(false);
             setContentAreaFilled(false);
             setBorderPainted(false);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-            // Monitora a movimentação do mouse para acender e apagar o brilho
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
                     mousePorCima = true;
-                    repaint(); // Força a atualização visual para acender a luz
+                    repaint();
                 }
 
                 @Override
                 public void mouseExited(MouseEvent e) {
                     mousePorCima = false;
-                    repaint(); // Volta ao brilho metálico comum
+                    repaint();
                 }
             });
         }
@@ -113,7 +145,6 @@ public class MenuPrincipalView extends JFrame {
             int largura = getWidth();
             int altura = getHeight();
 
-            // Se o mouse estiver em cima, a cor base clareia (efeito aceso/reluzente)
             Color baseAtual = mousePorCima ? corBrilho : corFundo;
             Color topoBrilho = mousePorCima ? corBrilho.brighter() : corBrilho;
 
@@ -133,7 +164,11 @@ public class MenuPrincipalView extends JFrame {
             g2.drawRoundRect(1, 1, largura - 2, altura - 2, 12, 12);
 
             g2.dispose();
-            super.paintComponent(g); // Escreve o texto centralizado sobre os efeitos aplicados
+            super.paintComponent(g);
         }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new MenuPrincipalView().setVisible(true));
     }
 }

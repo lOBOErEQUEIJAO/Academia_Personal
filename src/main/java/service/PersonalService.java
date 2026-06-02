@@ -36,6 +36,7 @@ public class PersonalService {
     }
 
     public void cadastrar(PersonalEntity personal, String senha) {
+        // Validações
         Validador.validarNome(personal.getNome());
         Validador.validarCpf(personal.getCpf());
         Validador.validarCref(personal.getCref());
@@ -47,9 +48,13 @@ public class PersonalService {
             throw new IllegalArgumentException("CPF " + personal.getCpf() + " ja esta cadastrado.");
         }
 
+        // ✨ GARANTIA DE SEGURANÇA: Injeta a senha no personal antes de abrir a sessão do banco
+        personal.setSenha(senha);
+
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Transaction tx = session.beginTransaction();
 
+            // Agora sim! O Hibernate sabe qual é a senha e aceita salvar sem reclamar
             session.save(personal);
 
             UserEntity user = new UserEntity(senha, TipoUsuario.PERSONAL);

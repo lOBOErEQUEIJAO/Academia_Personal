@@ -1,3 +1,5 @@
 ALTER TABLE alunos
-ADD COLUMN status VARCHAR(255);
-UPDATE alunos SET status = 'ATIVO';
+    ADD COLUMN IF NOT EXISTS status VARCHAR(255);
+UPDATE alunos
+SET status = 'ATIVO'
+WHERE status IS NULL;

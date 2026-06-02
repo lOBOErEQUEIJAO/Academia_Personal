@@ -1,11 +1,11 @@
 package telas;
 
+import controller.AgendamentoController;
+import controller.AlunoController;
+import controller.DisponibilidadeController;
 import entity.AgendamentoEntity;
 import entity.AlunoEntity;
 import entity.DisponibilidadeEntity;
-import service.AgendamentoService;
-import service.AlunoService;
-import service.DisponibilidadeService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,10 +13,16 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class AgendarAulaView extends javax.swing.JFrame {
     private JTextField txtNomeAluno, txtData, txtHorario, txtPersonal;
     private JButton btnSalvar, btnCancelar;
+
+    // CONEXÕES MVC: Injetando os controllers responsáveis
+    private final AlunoController alunoController = new AlunoController();
+    private final AgendamentoController agendamentoController = new AgendamentoController();
+    private final DisponibilidadeController disponibilidadeController = new DisponibilidadeController();
 
     public AgendarAulaView() {
         setTitle("Sistema Academia - Agendar Aula");
@@ -70,7 +76,6 @@ public class AgendarAulaView extends javax.swing.JFrame {
 
     private void executarAgendamento() {
         try {
-            // Captura dinâmica dos dados digitados na tela pelo usuário
             String nomeDigitado = txtNomeAluno.getText().trim();
             String dataDigitada = txtData.getText().trim();
             String horaDigitada = txtHorario.getText().trim();
@@ -80,25 +85,21 @@ public class AgendarAulaView extends javax.swing.JFrame {
                 throw new IllegalArgumentException("Por favor, preencha todos os campos do formulário!");
             }
 
-            // 1. Busca o aluno de maneira segura pelo service do Banco
-            AlunoService alunoService = new AlunoService();
-            AlunoEntity alunoEncontrado = alunoService.buscarPorNome(nomeDigitado);
+            // 1. Chamada via AlunoController (Camada MVC respeitada)
+            AlunoEntity alunoEncontrado = alunoController.buscarPorNome(nomeDigitado);
             if (alunoEncontrado == null) {
                 throw new IllegalArgumentException("O aluno '" + nomeDigitado + "' não foi encontrado!");
             }
 
-            // Formatadores para ler o texto da tela
             DateTimeFormatter formatadorData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             DateTimeFormatter formatadorHora = DateTimeFormatter.ofPattern("HH:mm");
 
-            // CONVERSÃO DINÂMICA: Transforma o que foi digitado em objetos de tempo do Java
             LocalDate data = LocalDate.parse(dataDigitada, formatadorData);
             LocalTime hora = LocalTime.parse(horaDigitada, formatadorHora);
             LocalDateTime dataHoraDoAgendamento = LocalDateTime.of(data, hora);
 
-            // 2. Localiza a disponibilidade correspondente do Personal cadastrado
-            DisponibilidadeService dispService = new DisponibilidadeService();
-            DisponibilidadeEntity disponibilidadeEncontrada = dispService.listarTodos().stream()
+            // 2. Localiza a disponibilidade correspondente de forma geral
+            DisponibilidadeEntity disponibilidadeEncontrada = disponibilidadeController.listarTodasDisponibilidades().stream()
                     .filter(d -> d.getData().equals(data)
                             && d.getPersonal() != null
                             && d.getPersonal().getNome().equalsIgnoreCase(personalDigitado)
@@ -110,26 +111,31 @@ public class AgendarAulaView extends javax.swing.JFrame {
                 throw new IllegalArgumentException("Não há disponibilidade cadastrada para o personal " + personalDigitado + " nesta data/horário!");
             }
 
-            // 3. Cria a nova entidade mapeada que vai virar uma linha na tabela 'agendamentos'
-            AgendamentoEntity agendamento = new AgendamentoEntity();
+            // =========================================================================
+            // INTEGRAÇÃO EXIGIDA: Busca filtrada usando o ID extraído dinamicamente
+            // =========================================================================
+            Long idPersonalDinamico = disponibilidadeEncontrada.getPersonal().getId();
+            List<DisponibilidadeEntity> horarios = disponibilidadeController.listarDisponibilidadesPorPersonal(idPersonalDinamico);
 
-            // Sincroniza os objetos relacionais (Essencial para o Hibernate salvar as FKs id_aluno e id_disponibilidade)
+            // Validação de segurança opcional usando a lista que você pediu para buscar
+            if (horarios == null || horarios.isEmpty()) {
+                throw new IllegalArgumentException("Erro de consistência: Nenhuma agenda ativa encontrada para este Personal.");
+            }
+
+            // 3. Monta a entidade com os dados da tela
+            AgendamentoEntity agendamento = new AgendamentoEntity();
             agendamento.setAluno(alunoEncontrado);
             agendamento.setDisponibilidade(disponibilidadeEncontrada);
-
-            // GRAVAÇÃO DINÂMICA: Seta a data e hora exatas criadas a partir dos campos da tela
             agendamento.setDataHora(dataHoraDoAgendamento);
             agendamento.setStatus(entity.StatusAgendamento.AGENDADO);
 
-            // Alimenta os campos auxiliares/observações sem destruir o objeto principal
             agendamento.setNomeAluno(alunoEncontrado.getNome());
             agendamento.setData(dataDigitada);
             agendamento.setHorario(horaDigitada);
             agendamento.setPersonal(disponibilidadeEncontrada.getPersonal().getNome());
 
-            // 4. Salva de vez no banco de dados através do Service
-            AgendamentoService service = new AgendamentoService();
-            service.agendar(agendamento);
+            // 4. Chamada via AgendamentoController (Camada MVC respeitada)
+            agendamentoController.agendarAula(agendamento);
 
             JOptionPane.showMessageDialog(this, "Aula agendada com sucesso e sincronizada no banco!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
             this.dispose();

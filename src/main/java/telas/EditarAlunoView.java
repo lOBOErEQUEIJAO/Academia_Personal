@@ -1,7 +1,8 @@
 package telas;
 
+import controller.AlunoController;
 import entity.AlunoEntity;
-import service.AlunoService;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -11,13 +12,20 @@ public class EditarAlunoView extends JFrame {
     private JComboBox<String> comboHorario;
     private JButton btnSalvar, btnExcluir;
     private AlunoEntity alunoAtual;
-    private AlunoService service = new AlunoService();
+
+    // CONEXÃO MVC: Injetando apenas o AlunoController
+    private final AlunoController alunoController = new AlunoController();
 
     public EditarAlunoView(String nomeBusca) {
         try {
-            this.alunoAtual = service.buscarPorNome(nomeBusca);
+            // Chamada segura via Controller
+            this.alunoAtual = alunoController.buscarPorNome(nomeBusca);
+
+            if (this.alunoAtual == null) {
+                throw new Exception("Aluno não encontrado no sistema.");
+            }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Erro: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Erro ao carregar dados do aluno: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             this.dispose();
             return;
         }
@@ -25,6 +33,7 @@ public class EditarAlunoView extends JFrame {
         setTitle("Agendamento: " + alunoAtual.getNome());
         setSize(400, 300);
         setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
         JPanel painelCentral = new JPanel(new GridBagLayout());
@@ -43,32 +52,52 @@ public class EditarAlunoView extends JFrame {
 
         btnSalvar = new JButton("Salvar Horário");
         btnSalvar.setBackground(new Color(30, 144, 255));
-
+        btnSalvar.setForeground(Color.WHITE);
 
         btnExcluir = new JButton("Remover Aluno");
         btnExcluir.setBackground(new Color(220, 20, 60));
+        btnExcluir.setForeground(Color.WHITE);
 
-
+        // EVENTO: Salvar Alterações passando pelo Controller
         btnSalvar.addActionListener(e -> {
             try {
                 alunoAtual.setHorarioTreino((String) comboHorario.getSelectedItem());
-                service.atualizar(alunoAtual);
-                JOptionPane.showMessageDialog(this, "Salvo!");
+
+                // Repassa a entidade atualizada para o Controller validar e salvar
+                alunoController.cadastrarNovoAluno(alunoAtual);
+
+                JOptionPane.showMessageDialog(this, "Horário atualizado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
                 this.dispose();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Erro: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Erro ao salvar: " + ex.getMessage(), "Erro de Validação", JOptionPane.WARNING_MESSAGE);
             }
         });
 
+        // EVENTO: Excluir Aluno passando estritamente pelo Controller
         btnExcluir.addActionListener(e -> {
-            if (JOptionPane.showConfirmDialog(this, "Excluir?") == JOptionPane.YES_OPTION) {
-                service.excluir(alunoAtual.getId());
-                this.dispose();
+            int confirmacao = JOptionPane.showConfirmDialog(
+                    this,
+                    "Deseja realmente remover permanentemente o aluno " + alunoAtual.getNome() + "?",
+                    "Confirmar Exclusão",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+            );
+
+            if (confirmacao == JOptionPane.YES_OPTION) {
+                try {
+                    // Chamada correta do método do Controller
+                    alunoController.excluirAluno(alunoAtual.getId());
+                    JOptionPane.showMessageDialog(this, "Aluno removido com sucesso!");
+                    this.dispose();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Erro técnico ao excluir: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
         painelBotoes.add(btnSalvar);
         painelBotoes.add(btnExcluir);
+
         add(painelCentral, BorderLayout.CENTER);
         add(painelBotoes, BorderLayout.SOUTH);
     }

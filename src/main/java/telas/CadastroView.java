@@ -1,8 +1,8 @@
 package telas;
 
+import controller.AlunoController;
 import entity.AlunoEntity;
 import entity.StatusAluno;
-import service.AlunoService;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
@@ -16,9 +16,14 @@ public class CadastroView extends JFrame {
     private JPasswordField txtSenha;
     private JButton btnSalvar, btnCancelar;
 
+    // LIGAÇÃO MVC: Conectando com o AlunoController
+    private final AlunoController alunoController;
+
     public CadastroView() {
+        this.alunoController = new AlunoController();
+
         setTitle("Sistema Academia - Cadastrar Novo Aluno");
-        setSize(450, 600); // Aumentado um pouco a altura para acomodar a imagem no topo
+        setSize(450, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -28,12 +33,11 @@ public class CadastroView extends JFrame {
         JLabel lblFotoPerfil = new JLabel();
 
         try {
-            // EXEMPLO: Mude esse caminho para o arquivo correto do seu computador depois!
             File arquivoImg = new File("/home/alessandra/Imagens/icone.png");
 
             if (arquivoImg.exists()) {
                 BufferedImage imgOriginal = ImageIO.read(arquivoImg);
-                ImageIcon iconeRedondo = criarImagemRedonda(imgOriginal, 100); // Tamanho ajustado para o topo
+                ImageIcon iconeRedondo = criarImagemRedonda(imgOriginal, 100);
                 lblFotoPerfil.setIcon(iconeRedondo);
             } else {
                 lblFotoPerfil.setIcon(criarCirculoPadrao(100));
@@ -71,41 +75,34 @@ public class CadastroView extends JFrame {
         JPanel painelBotoes = new JPanel(new GridLayout(2, 1, 5, 5));
         painelBotoes.setBorder(BorderFactory.createEmptyBorder(0, 25, 20, 25));
 
-        // Botão Cancelar configurado para Voltar
         btnCancelar = new JButton("Cancelar e Voltar");
         btnCancelar.setBackground(new Color(180, 180, 180));
         btnCancelar.setFont(new Font("Arial", Font.PLAIN, 13));
 
-        // Botão Salvar
         btnSalvar = new JButton("Finalizar Cadastro");
         btnSalvar.setBackground(new Color(34, 139, 34));
-        btnSalvar.setForeground(Color.WHITE); // Texto branco para destacar no verde
+        btnSalvar.setForeground(Color.WHITE);
         btnSalvar.setFont(new Font("Arial", Font.BOLD, 14));
 
         painelBotoes.add(btnCancelar);
         painelBotoes.add(btnSalvar);
 
-        // Adicionando os painéis na janela seguindo a estrutura original
-        add(painelTopo, BorderLayout.NORTH); // Imagem adicionada na parte de cima (Norte)
+        add(painelTopo, BorderLayout.NORTH);
         add(painelCampos, BorderLayout.CENTER);
         add(painelBotoes, BorderLayout.SOUTH);
 
         // --- EVENTOS DE INTERLIGAÇÃO ---
 
-        // Ação do Botão Cancelar: Fecha a ficha e volta direto para o Menu Principal
         btnCancelar.addActionListener(e -> {
             this.dispose();
             new MenuPrincipalView().setVisible(true);
         });
 
-        // Ação do Botão Salvar
         btnSalvar.addActionListener(e -> executarCadastro());
 
-        // Tecla ENTER aciona o botão de salvar automaticamente
         getRootPane().setDefaultButton(btnSalvar);
     }
 
-    // Método auxiliar para recortar a imagem em formato circular
     private static ImageIcon criarImagemRedonda(BufferedImage imagemOriginal, int tamanho) {
         BufferedImage imagemRedonda = new BufferedImage(tamanho, tamanho, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = imagemRedonda.createGraphics();
@@ -125,7 +122,6 @@ public class CadastroView extends JFrame {
         return new ImageIcon(imagemRedonda);
     }
 
-    // Gera um círculo cinza caso o arquivo não seja encontrado
     private static ImageIcon criarCirculoPadrao(int tamanho) {
         BufferedImage imagemBkp = new BufferedImage(tamanho, tamanho, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = imagemBkp.createGraphics();
@@ -155,19 +151,16 @@ public class CadastroView extends JFrame {
             aluno.setDataMatricula(LocalDate.now());
             aluno.setStatus(StatusAluno.ATIVO);
 
-            AlunoService service = new AlunoService();
-            service.cadastrar(aluno, senha);
+            // MODIFICADO: Chama o Controller em vez de chamar o Service direto
+            alunoController.cadastrarNovoAluno(aluno);
 
             JOptionPane.showMessageDialog(this, "Aluno cadastrado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
 
             this.dispose();
             new MenuPrincipalView().setVisible(true);
 
-        } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, "Atenção: " + ex.getMessage(), "Erro de Validação", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Erro técnico ao salvar: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro de Validação", JOptionPane.WARNING_MESSAGE);
         }
     }
 

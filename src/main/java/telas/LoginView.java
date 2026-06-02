@@ -1,19 +1,26 @@
 package telas;
 
-import service.LoginService;
+import controller.LoginController;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import javax.imageio.ImageIO;
+import request.LoginRequest;
 
 public class LoginView extends JFrame {
-    private JTextField txtUsuario;
+    private JTextField txtUsuario; // Este campo recebe o CPF do usuário
     private JPasswordField txtSenha;
     private JButton btnEntrar;
 
+    // Injetando o Controller conforme as regras do MVC
+    private final LoginController loginController;
+
     public LoginView() {
+        // Inicializa o gerenciador de fluxo da tela
+        this.loginController = new LoginController();
+
         setTitle("Sistema Academia - Acesso Personal");
         setSize(750, 530); // Ajustado para dar o espaçamento confortável do protótipo
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -95,15 +102,40 @@ public class LoginView extends JFrame {
         }
         painelPrincipal.add(lblLogo);
 
-        // Inicialização da Janela
+        // Inicialização e Eventos da Janela
         add(painelPrincipal);
-        btnEntrar.addActionListener(e -> executarLogin());
-        getRootPane().setDefaultButton(btnEntrar);
 
+        // JUNÇÃO: Evento do clique usando o LoginController e LoginRequest
+        btnEntrar.addActionListener(e -> {
+            try {
+                String cpfDigitado = txtUsuario.getText(); // Captura o CPF digitado
+                String senhaDigitada = new String(txtSenha.getPassword()); // Captura a senha
+
+                // 1. Empacota os dados capturados na classe Request criada
+                LoginRequest dadosLogin = new LoginRequest(cpfDigitado, senhaDigitada);
+
+                // 2. Transfere a responsabilidade de autenticar para o controller
+                boolean sucesso = loginController.autenticar(dadosLogin);
+
+                // 3. Se retornar true, direciona o fluxo para a tela do Menu
+                if (sucesso) {
+                    JOptionPane.showMessageDialog(this, "Login realizado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                    this.dispose();
+                    new MenuPrincipalView().setVisible(true);
+                }
+
+            } catch (Exception ex) {
+                // Captura as mensagens de validação lançadas pelo controller
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro de Autenticação", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        getRootPane().setDefaultButton(btnEntrar);
         setVisible(true);
     }
 
-    // Método que gera o recorte redondo adicionando a linha preta fina de contorno do desenho
+    /*Método auxiliar que gera o recorte redondo adicionando a linha preta fina de contorno do desenho
+     */
     private static ImageIcon criarImagemRedondaComBorda(BufferedImage imagemOriginal, int tamanho) {
         BufferedImage imagemRedonda = new BufferedImage(tamanho, tamanho, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = imagemRedonda.createGraphics();
@@ -123,33 +155,5 @@ public class LoginView extends JFrame {
 
         g2.dispose();
         return new ImageIcon(imagemRedonda);
-    }
-
-    private void executarLogin() {
-        String cpf = txtUsuario.getText();
-        String senha = new String(txtSenha.getPassword());
-
-        if (cpf.isEmpty() || senha.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Preencha todos os campos!", "Aviso", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        LoginService service = new LoginService();
-        try {
-            if (service.autenticar(cpf, senha)) {
-                new MenuPrincipalView().setVisible(true);
-                this.dispose();
-            } else {
-                JOptionPane.showMessageDialog(this, "CPF ou Senha incorretos.", "Erro", JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro de Conexão: " + e.getMessage());
-        }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new LoginView();
-        });
     }
 }

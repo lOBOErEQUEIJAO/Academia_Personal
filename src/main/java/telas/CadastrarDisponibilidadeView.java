@@ -1,9 +1,9 @@
 package telas;
 
+import controller.DisponibilidadeController;
+import controller.PersonalController;
 import entity.DisponibilidadeEntity;
 import entity.PersonalEntity;
-import service.DisponibilidadeService;
-import service.PersonalService; // Importe o service de personal se precisar buscar por nome
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,6 +14,10 @@ import java.time.format.DateTimeFormatter;
 public class CadastrarDisponibilidadeView extends JFrame {
     private JTextField txtNomePersonal, txtDiaSemana, txtHoraInicio, txtHoraFim;
     private JButton btnSalvar, btnCancelar;
+
+    // CONEXÕES MVC: Injetando os controllers correspondentes
+    private final DisponibilidadeController disponibilidadeController = new DisponibilidadeController();
+    private final PersonalController personalController = new PersonalController();
 
     public CadastrarDisponibilidadeView() {
         setTitle("Sistema Academia - Cadastrar Disponibilidade");
@@ -30,7 +34,6 @@ public class CadastrarDisponibilidadeView extends JFrame {
         txtNomePersonal = new JTextField();
         painelCampos.add(txtNomePersonal);
 
-        // Dica: Como sua entity usa LocalDate, oriente o usuário a digitar uma data válida
         painelCampos.add(new JLabel("Data (DD/MM/AAAA):"));
         txtDiaSemana = new JTextField();
         painelCampos.add(txtDiaSemana);
@@ -58,7 +61,6 @@ public class CadastrarDisponibilidadeView extends JFrame {
         btnSalvar.setBackground(new Color(34, 139, 34));
         btnSalvar.setForeground(Color.WHITE);
 
-        // INTEGRAÇÃO COM O BANCO DE DADOS MAPEADA AQUI
         btnSalvar.addActionListener(e -> executarSalvamento());
 
         painelBotoes.add(btnCancelar);
@@ -71,11 +73,11 @@ public class CadastrarDisponibilidadeView extends JFrame {
         getRootPane().setDefaultButton(btnSalvar);
     }
 
-    /**Coleta as strings da tela, realiza o parse para objetos de data/hora do JPA*/
+    /** Coleta as strings da tela, realiza o parse para objetos de data/hora do JPA */
     private void executarSalvamento() {
         try {
             String nomePersonal = txtNomePersonal.getText().trim();
-            String dataDigitada = txtDiaSemana.getText().trim(); // Campo usado como entrada de data
+            String dataDigitada = txtDiaSemana.getText().trim();
             String horaInicioDigitada = txtHoraInicio.getText().trim();
             String horaFimDigitada = txtHoraFim.getText().trim();
 
@@ -83,9 +85,8 @@ public class CadastrarDisponibilidadeView extends JFrame {
                 throw new IllegalArgumentException("Todos os campos são obrigatórios!");
             }
 
-            // 1. SOLUÇÃO DO ERRO TRANSIENT: Busca o Personal real cadastrado no Banco de Dados
-            PersonalService personalService = new PersonalService();
-            PersonalEntity personalEncontrado = personalService.buscarPorNome(nomePersonal);
+            // 1. Chamada segura usando a camada de Controller para localizar o Personal pelo padrão MVC
+            PersonalEntity personalEncontrado = personalController.buscarPorNome(nomePersonal);
 
             // Validação de segurança: se o usuário digitar um nome que não existe no banco
             if (personalEncontrado == null) {
@@ -102,18 +103,14 @@ public class CadastrarDisponibilidadeView extends JFrame {
 
             // 3. ENTIDADE: Instancia e popula o objeto de banco de dados
             DisponibilidadeEntity disp = new DisponibilidadeEntity();
-
-            // Passa o objeto persistido que encontramos (ele tem ID válido e o Hibernate ama)
             disp.setPersonal(personalEncontrado);
-
             disp.setData(data);
             disp.setHoraInicio(horaInicio);
             disp.setHoraFim(horaFim);
             disp.setStatus(entity.StatusDisponibilidade.ATIVO);
 
-            // 4. SERVICE: Envia para a validação de regras de negócio e salvamento definitivo
-            DisponibilidadeService service = new DisponibilidadeService();
-            service.cadastrar(disp);
+            // 4. CONTROLLER: Envia os dados encapsulados respeitando a arquitetura MVC
+            disponibilidadeController.cadastrarNovaDisponibilidade(disp);
 
             // Feedback visual de sucesso
             JOptionPane.showMessageDialog(this, "Horários salvos no banco de dados com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
@@ -128,6 +125,5 @@ public class CadastrarDisponibilidadeView extends JFrame {
             JOptionPane.showMessageDialog(this, "Erro técnico ao gravar dados: " + ex.getMessage(), "Erro no Banco", JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
         }
-
     }
 }

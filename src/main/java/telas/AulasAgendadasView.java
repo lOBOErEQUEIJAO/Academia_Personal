@@ -1,8 +1,9 @@
 package telas;
 
+import controller.AgendamentoController;
+import controller.DisponibilidadeController;
 import entity.AgendamentoEntity;
-import entity.StatusAluno; // IMPORTANTE PARA O FILTRO DO ALUNO INATIVO
-import service.AgendamentoService;
+import entity.DisponibilidadeEntity;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -19,8 +20,10 @@ public class AulasAgendadasView extends JFrame {
 
     private JTable tabelaAulas;
     private DefaultTableModel modeloTabela;
-    private List<AgendamentoEntity> listaAgendamentos;
-    private final AgendamentoService agendamentoService = new AgendamentoService();
+
+    // CONEXÃO MVC: Controladores injetados com segurança
+    private final AgendamentoController agendamentoController = new AgendamentoController();
+    private final DisponibilidadeController disponibilidadeController = new DisponibilidadeController();
 
     public AulasAgendadasView() {
         setTitle("Sistema Academia - Relatório de Aulas");
@@ -55,10 +58,15 @@ public class AulasAgendadasView extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    int linha = tabelaAulas.getSelectedRow();
-                    if (linha >= 0) {
-                        AgendamentoEntity agendamento = listaAgendamentos.get(linha);
-                        abrirTelaEdicao(agendamento);
+                    int rowVisual = tabelaAulas.getSelectedRow();
+                    if (rowVisual >= 0) {
+                        int rowReal = tabelaAulas.convertRowIndexToModel(rowVisual);
+
+                        // Buscando o agendamento correspondente à linha selecionada
+                        AgendamentoEntity agendamento = agendamentoController.obterAgendamentoPorLinha(rowReal);
+                        if (agendamento != null) {
+                            abrirTelaEdicao(agendamento);
+                        }
                     }
                 }
             }
@@ -68,14 +76,13 @@ public class AulasAgendadasView extends JFrame {
         add(scroll, BorderLayout.CENTER);
 
         // ==========================================
-        // PAINEL DE BOTÕES (SUL) - COM O NOVO BOTÃO ATUALIZAR
+        // PAINEL DE BOTÕES (SUL)
         // ==========================================
         JPanel painelSul = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
 
-        // NOVO BOTÃO: Atualizar Lista
         JButton btnAtualizar = new JButton("Atualizar Lista");
         btnAtualizar.setPreferredSize(new Dimension(180, 35));
-        btnAtualizar.setBackground(new Color(60, 179, 113)); // Verde amigável
+        btnAtualizar.setBackground(new Color(60, 179, 113));
         btnAtualizar.setForeground(Color.WHITE);
         btnAtualizar.setFont(new Font("Arial", Font.BOLD, 13));
         btnAtualizar.addActionListener(e -> {
@@ -83,7 +90,6 @@ public class AulasAgendadasView extends JFrame {
             JOptionPane.showMessageDialog(this, "Lista de cronogramas atualizada!");
         });
 
-        // BOTÃO: Voltar
         JButton btnVoltar = new JButton("Voltar");
         btnVoltar.setPreferredSize(new Dimension(180, 35));
         btnVoltar.addActionListener(e -> {
@@ -97,44 +103,18 @@ public class AulasAgendadasView extends JFrame {
     }
 
     // ==========================================
-    // CARREGA DADOS FILTRANDO APENAS ALUNOS ATIVOS
+    // CARREGA DADOS USANDO O CONTROLLER (MVC)
     // ==========================================
     private void carregarDadosDoBanco() {
         try {
-            modeloTabela.setRowCount(0); // Limpa as linhas visuais da tabela
+            modeloTabela.setRowCount(0); // Limpa as linhas da tabela visual
 
-            // Busca a lista de agendamentos atualizada do banco
-            listaAgendamentos = agendamentoService.listarTodos();
+            // A View pede as linhas prontas e atualizadas para o Controller
+            List<Object[]> linhasTabela = agendamentoController.obterDadosTabela();
 
-            DateTimeFormatter dataFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            DateTimeFormatter horaFormat = DateTimeFormatter.ofPattern("HH:mm");
-
-            if (listaAgendamentos != null) {
-                for (AgendamentoEntity agendamento : listaAgendamentos) {
-
-                    // MODIFICAÇÃO AQUI: Se o aluno associado estiver INATIVO, pula e não mostra na tabela!
-                    if (agendamento.getAluno() != null && agendamento.getAluno().getStatus() == StatusAluno.INATIVO) {
-                        continue;
-                    }
-
-                    String aluno = "";
-                    if (agendamento.getAluno() != null) {
-                        aluno = agendamento.getAluno().getNome();
-                    }
-
-                    String data = "";
-                    String hora = "";
-                    if (agendamento.getDataHora() != null) {
-                        data = agendamento.getDataHora().toLocalDate().format(dataFormat);
-                        hora = agendamento.getDataHora().toLocalTime().format(horaFormat);
-                    }
-
-                    String personal = "";
-                    if (agendamento.getPersonal() != null) {
-                        personal = agendamento.getPersonal();
-                    }
-
-                    modeloTabela.addRow(new Object[]{aluno, data, hora, personal});
+            if (linhasTabela != null) {
+                for (Object[] linha : linhasTabela) {
+                    modeloTabela.addRow(linha); // Adiciona na tabela do Swing
                 }
             }
         } catch (Exception ex) {
@@ -199,12 +179,18 @@ public class AulasAgendadasView extends JFrame {
                 agendamento.setDataHora(dataHora);
                 agendamento.setPersonal(txtPersonal.getText().trim());
 
-                agendamentoService.salvar(agendamento);
+                // Passa pelo controller para acionar as regras de validação e persistência!
+                agendamentoController.salvarAgendamento(agendamento);
 
-                JOptionPane.showMessageDialog(dialog, "Horário updated com sucesso!");
+                // Integração inteligente da busca de horários do Personal
+                if (agendamento.getAluno() != null && agendamento.getAluno().getId() != null) {
+                    carregarHorariosDisponiveisDoPersonal(agendamento.getAluno().getId());
+                }
+
+                JOptionPane.showMessageDialog(dialog, "Horário alterado com sucesso!");
                 dialog.dispose();
 
-                // Recarrega a tabela automaticamente após salvar
+                // Recarrega a tabela automaticamente após salvar para refletir as mudanças
                 carregarDadosDoBanco();
 
             } catch (Exception ex) {
@@ -217,5 +203,20 @@ public class AulasAgendadasView extends JFrame {
         dialog.add(btnSalvar, c);
 
         dialog.setVisible(true);
+    }
+
+    /**
+     * Método utilitário acionado internamente para carregar as disponibilidades em lote
+     * do Personal Trainer associado, fazendo ponte direta com o DisponibilidadeController.
+     */
+    private List<DisponibilidadeEntity> carregarHorariosDisponiveisDoPersonal(Long idPersonal) {
+        try {
+            if (idPersonal != null) {
+                return disponibilidadeController.listarDisponibilidadesPorPersonal(idPersonal);
+            }
+        } catch (Exception e) {
+            System.err.println("Aviso técnico: Não foi possível obter as disponibilidades: " + e.getMessage());
+        }
+        return null;
     }
 }
